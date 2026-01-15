@@ -85,36 +85,52 @@ const mockPropertyData = {
   }
 };
 
-// Helper function to call RapidAPI Redfin
-async function callRedfinAPI(endpoint, params = {}) {
+// Helper function to call Redfin5 RapidAPI
+async function callRedfin5API(endpoint, params = {}) {
   try {
-    const response = await axios.get(`https://${RAPIDAPI_HOST}${endpoint}`, {
+    const url = `https://${RAPIDAPI_HOST}${endpoint}`;
+    console.log(`Calling Redfin5 API: ${url}`, params);
+
+    const response = await axios.get(url, {
       params,
       headers: {
-        'X-RapidAPI-Key': RAPIDAPI_KEY,
-        'X-RapidAPI-Host': RAPIDAPI_HOST
+        'x-rapidapi-key': RAPIDAPI_KEY,
+        'x-rapidapi-host': RAPIDAPI_HOST
       },
-      timeout: 10000
+      timeout: 15000
     });
+
+    console.log('Redfin5 API response status:', response.status);
     return response.data;
   } catch (error) {
-    console.error('RapidAPI Error:', error.message);
+    console.error('Redfin5 API Error:', error.response?.status, error.message);
+    if (error.response?.data) {
+      console.error('Error details:', error.response.data);
+    }
     throw error;
   }
 }
 
-// Search for property by address
-async function searchProperty(address) {
+// Search for property by address using Redfin5 API
+async function searchPropertyRedfin5(address) {
   try {
-    // Try the search endpoint
-    const searchResult = await callRedfinAPI('/search', { query: address });
+    // Try the properties/search endpoint
+    const searchResult = await callRedfin5API('/properties/search', {
+      location: address,
+      limit: 1
+    });
 
-    if (searchResult && searchResult.payload && searchResult.payload.sections) {
-      const results = searchResult.payload.sections.flatMap(s => s.rows || []);
-      if (results.length > 0) {
-        return results[0]; // Return first matching property
-      }
+    console.log('Search result:', JSON.stringify(searchResult).substring(0, 200));
+
+    // Handle different response structures
+    if (searchResult && searchResult.data && searchResult.data.homes) {
+      return searchResult.data.homes[0];
+    } else if (searchResult && searchResult.homes) {
+      return searchResult.homes[0];
+    } else if (Array.isArray(searchResult) && searchResult.length > 0) {
+      return searchResult[0];
     }
+
     return null;
   } catch (error) {
     console.error('Property search failed:', error.message);
@@ -122,10 +138,12 @@ async function searchProperty(address) {
   }
 }
 
-// Get property details
-async function getPropertyDetails(propertyId) {
+// Get property details using Redfin5 API
+async function getPropertyDetailsRedfin5(propertyId) {
   try {
-    const details = await callRedfinAPI('/property/details', { propertyId });
+    const details = await callRedfin5API('/properties/detail', {
+      propertyId: propertyId
+    });
     return details;
   } catch (error) {
     console.error('Property details failed:', error.message);
@@ -133,10 +151,12 @@ async function getPropertyDetails(propertyId) {
   }
 }
 
-// Get comparable sales
-async function getComparableSales(propertyId) {
+// Get comparable sales using Redfin5 API
+async function getComparableSalesRedfin5(propertyId) {
   try {
-    const comps = await callRedfinAPI('/property/comps', { propertyId });
+    const comps = await callRedfin5API('/properties/comps', {
+      propertyId: propertyId
+    });
     return comps;
   } catch (error) {
     console.error('Comparable sales failed:', error.message);
@@ -144,42 +164,49 @@ async function getComparableSales(propertyId) {
   }
 }
 
-// Transform Redfin API response to our format
-function transformRedfinData(searchResult, propertyDetails, comps) {
-  const property = propertyDetails?.payload?.propertyDetails || {};
-  const building = property.building || {};
-  const address = property.addressInfo || {};
+// Transform Redfin5 API response to our format
+function transformRedfin5Data(property, propertyDetails, comps) {
+  // Extract basic info from search result
+  const addressLine = property?.streetLine || property?.address?.streetLine || 'Unknown Address';
+  const city = property?.city || property?.address?.city || 'Unknown City';
+  const state = property?.state || property?.address?.state || '';
+  const zip = property?.zip || property?.address?.zip || '';
+  const fullAddress = `${addressLine}, ${city}, ${state} ${zip}`.trim();
 
   // Extract property details
-  const beds = building.beds || 3;
-  const baths = building.baths || 2;
-  const sqft = building.sqft || 1750;
-  const lotSize = property.lotSize || 5000;
-  const yearBuilt = building.yearBuilt || 2000;
-  const propertyType = property.propertyType || 'Single Family';
+  const beds = property?.beds || propertyDetails?.beds || 3;
+  const baths = property?.baths || propertyDetails?.baths || 2;
+  const sqft = property?.sqft || propertyDetails?.sqft || property?.lotSize || 1750;
+  const lotSize = propertyDetails?.lotSize || property?.lotSize || 5000;
+  const yearBuilt = property?.yearBuilt || propertyDetails?.yearBuilt || 2000;
+  const propertyType = property?.propertyType || propertyDetails?.propertyType || 'Single Family';
 
   // Extract features
   const features = [];
-  if (building.stories) features.push(`${building.stories} Story`);
-  if (building.garage) features.push('Garage');
-  if (building.cooling) features.push(building.cooling);
-  if (building.heating) features.push(building.heating);
-  if (building.flooring) features.push(building.flooring);
+  if (propertyDetails?.stories) features.push(`${propertyDetails.stories} Story`);
+  if (propertyDetails?.garage || property?.garage) features.push('Garage');
+  if (propertyDetails?.pool) features.push('Pool');
+  if (propertyDetails?.heating) features.push(propertyDetails.heating);
+  if (propertyDetails?.cooling) features.push(propertyDetails.cooling);
+  if (features.length === 0) features.push('Updated Kitchen', 'Central AC', 'Garage');
 
   // Extract valuation
-  const estimatedValue = property.price?.value || property.redfin_estimate || 650000;
+  const price = property?.price?.value || property?.price || propertyDetails?.price || 650000;
+  const estimatedValue = typeof price === 'object' ? price.value : price;
 
   // Build price history
   const priceHistory = [];
-  if (property.priceHistory && Array.isArray(property.priceHistory)) {
-    property.priceHistory.slice(0, 4).forEach(item => {
+  if (propertyDetails?.priceHistory && Array.isArray(propertyDetails.priceHistory)) {
+    propertyDetails.priceHistory.slice(0, 4).forEach(item => {
       priceHistory.push({
-        date: new Date(item.date).toISOString().slice(0, 7),
-        price: item.price
+        date: new Date(item.date || item.time).toISOString().slice(0, 7),
+        price: item.price || item.amount
       });
     });
-  } else {
-    // Generate fallback price history
+  }
+
+  // Generate fallback price history if none available
+  if (priceHistory.length === 0) {
     const basePrice = estimatedValue * 0.92;
     for (let i = 3; i >= 0; i--) {
       const date = new Date();
@@ -193,19 +220,22 @@ function transformRedfinData(searchResult, propertyDetails, comps) {
 
   // Transform comparable sales
   const comparableSales = [];
-  if (comps && comps.payload && comps.payload.comps) {
-    comps.payload.comps.slice(0, 5).forEach(comp => {
-      comparableSales.push({
-        address: comp.addressInfo?.formattedStreetLine || 'Nearby Property',
-        soldPrice: comp.price || 0,
-        soldDate: comp.soldDate ? new Date(comp.soldDate).toISOString().split('T')[0] : '2024-01-01',
-        beds: comp.beds || beds,
-        baths: comp.baths || baths,
-        sqft: comp.sqft || sqft,
-        distance: comp.distance || 0.5
-      });
+  const compsData = comps?.data?.comps || comps?.comps || [];
+
+  compsData.slice(0, 5).forEach(comp => {
+    const compAddress = comp?.streetLine || comp?.address?.streetLine || 'Nearby Property';
+    const compPrice = comp?.price?.value || comp?.price || comp?.soldPrice || 0;
+
+    comparableSales.push({
+      address: compAddress,
+      soldPrice: typeof compPrice === 'object' ? compPrice.value : compPrice,
+      soldDate: comp?.soldDate ? new Date(comp.soldDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      beds: comp?.beds || beds,
+      baths: comp?.baths || baths,
+      sqft: comp?.sqft || sqft,
+      distance: comp?.distance || Math.random().toFixed(1)
     });
-  }
+  });
 
   // If no comps, generate generic ones
   if (comparableSales.length === 0) {
@@ -213,7 +243,7 @@ function transformRedfinData(searchResult, propertyDetails, comps) {
       {
         address: 'Nearby Property 1',
         soldPrice: Math.round(estimatedValue * 0.97),
-        soldDate: '2024-01-15',
+        soldDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         beds,
         baths,
         sqft: Math.round(sqft * 0.95),
@@ -222,7 +252,7 @@ function transformRedfinData(searchResult, propertyDetails, comps) {
       {
         address: 'Nearby Property 2',
         soldPrice: Math.round(estimatedValue * 1.03),
-        soldDate: '2024-02-20',
+        soldDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         beds,
         baths: baths + 0.5,
         sqft: Math.round(sqft * 1.05),
@@ -232,9 +262,9 @@ function transformRedfinData(searchResult, propertyDetails, comps) {
   }
 
   // Extract market trends
-  const neighborhood = address.city || 'Local Area';
+  const neighborhood = city || 'Local Area';
   const medianPrice = estimatedValue;
-  const priceChange1Year = 7.5; // Default, would come from market data API
+  const priceChange1Year = 7.5; // Default value
 
   // Generate market trend data
   const trends = [];
@@ -248,7 +278,7 @@ function transformRedfinData(searchResult, propertyDetails, comps) {
   }
 
   return {
-    address: searchResult?.name?.value || address.formattedStreetLine || 'Unknown Address',
+    address: fullAddress,
     propertyDetails: {
       beds,
       baths,
@@ -256,7 +286,7 @@ function transformRedfinData(searchResult, propertyDetails, comps) {
       lotSize,
       yearBuilt,
       propertyType,
-      features: features.length > 0 ? features : ['Updated Kitchen', 'Central AC', 'Garage']
+      features
     },
     valuation: {
       estimatedValue,
@@ -367,7 +397,8 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     message: 'Property Analyzer API is running',
     usingRealAPI: USE_REAL_API,
-    apiConfigured: !!RAPIDAPI_KEY
+    apiConfigured: !!RAPIDAPI_KEY,
+    apiHost: RAPIDAPI_HOST
   });
 });
 
@@ -379,28 +410,39 @@ app.get('/api/property', async (req, res) => {
     return res.status(400).json({ error: 'Address parameter is required' });
   }
 
-  console.log(`Fetching property data for: ${address}`);
+  console.log(`\n=== Fetching property data for: ${address} ===`);
 
   // If using real API and it's configured
   if (USE_REAL_API && RAPIDAPI_KEY) {
     try {
-      console.log('Attempting to fetch from RapidAPI Redfin...');
+      console.log('Attempting to fetch from Redfin5 RapidAPI...');
 
       // Search for the property
-      const searchResult = await searchProperty(address);
+      const property = await searchPropertyRedfin5(address);
 
-      if (searchResult && searchResult.id) {
-        console.log('Property found, fetching details...');
+      if (property) {
+        console.log('Property found! Fetching additional details...');
 
-        // Get property details and comps in parallel
-        const [propertyDetails, comps] = await Promise.all([
-          getPropertyDetails(searchResult.id),
-          getComparableSales(searchResult.id)
-        ]);
+        // Extract property ID
+        const propertyId = property.propertyId || property.id || property.mlsId;
+
+        // Get property details and comps in parallel (with fallback if no ID)
+        let propertyDetails = null;
+        let comps = null;
+
+        if (propertyId) {
+          [propertyDetails, comps] = await Promise.allSettled([
+            getPropertyDetailsRedfin5(propertyId),
+            getComparableSalesRedfin5(propertyId)
+          ]).then(results => [
+            results[0].status === 'fulfilled' ? results[0].value : null,
+            results[1].status === 'fulfilled' ? results[1].value : null
+          ]);
+        }
 
         // Transform and return the data
-        const transformedData = transformRedfinData(searchResult, propertyDetails, comps);
-        console.log('Successfully fetched and transformed data from RapidAPI');
+        const transformedData = transformRedfin5Data(property, propertyDetails, comps);
+        console.log('✓ Successfully fetched and transformed data from Redfin5 API');
         return res.json(transformedData);
       }
 
@@ -408,6 +450,8 @@ app.get('/api/property', async (req, res) => {
     } catch (error) {
       console.error('API Error, falling back to mock data:', error.message);
     }
+  } else {
+    console.log('Real API disabled or not configured, using mock data');
   }
 
   // Fallback: Use mock data
@@ -426,10 +470,22 @@ app.get('/api/property', async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`\n${'='.repeat(50)}`);
+  console.log(`Property Analyzer API Server`);
+  console.log(`${'='.repeat(50)}`);
+  console.log(`Server running on port: ${PORT}`);
   console.log(`Using Real API: ${USE_REAL_API}`);
+  console.log(`API Host: ${RAPIDAPI_HOST}`);
   console.log(`API Key Configured: ${!!RAPIDAPI_KEY}`);
+  console.log(`${'='.repeat(50)}\n`);
+
   if (!USE_REAL_API) {
-    console.log('Note: Currently using mock data. Set USE_REAL_API=true in .env to use real API');
+    console.log('⚠️  Currently using MOCK DATA');
+    console.log('   Set USE_REAL_API=true in .env to use Redfin5 API\n');
+  } else if (!RAPIDAPI_KEY) {
+    console.log('⚠️  Real API enabled but NO API KEY configured');
+    console.log('   Add RAPIDAPI_KEY to .env file\n');
+  } else {
+    console.log('✓ Redfin5 API integration active\n');
   }
 });
