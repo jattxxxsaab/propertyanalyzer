@@ -339,6 +339,28 @@ function generateGenericMockData(address) {
 
 // Routes
 
+// API root - shows available endpoints
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Property Analyzer API',
+    version: '1.0.0',
+    endpoints: {
+      '/api/health': {
+        method: 'GET',
+        description: 'Check API health and configuration status'
+      },
+      '/api/property': {
+        method: 'GET',
+        description: 'Get property data by address',
+        parameters: {
+          address: 'Full property address (required)'
+        },
+        example: '/api/property?address=123 Main St, Seattle, WA 98101'
+      }
+    }
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
