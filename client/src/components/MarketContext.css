@@ -1,0 +1,80 @@
+.market-context {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 32px;
+}
+
+.market-context h3 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.context-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.context-label {
+  font-size: 12px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.context-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.context-disclaimer {
+  margin-top: 24px;
+  padding: 16px;
+  background: #fffbeb;
+  border-left: 4px solid var(--warning);
+  border-radius: 4px;
+}
+
+.context-disclaimer p {
+  font-size: 14px;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.context-disclaimer strong {
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .market-context {
+    padding: 24px 20px;
+  }
+
+  .context-grid {
+    grid-template-columns: 1fr;
+  }
+}

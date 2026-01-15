@@ -1,0 +1,151 @@
+.comparables {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 32px;
+}
+
+.comparables h3 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.comparables-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sort-controls label {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.sort-select {
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.comparables-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.comp-card {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+.comp-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.comp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+
+.comp-address h4 {
+  font-size: 18px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.comp-location {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.comp-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.comp-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.comp-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comp-detail-label {
+  font-size: 11px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.comp-detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.comp-detail.highlight {
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.comp-detail.highlight .comp-detail-value {
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .comparables {
+    padding: 24px 20px;
+  }
+
+  .comparables-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .sort-controls {
+    width: 100%;
+  }
+
+  .sort-select {
+    flex: 1;
+  }
+
+  .comp-header {
+    flex-direction: column;
+  }
+
+  .comp-price {
+    font-size: 20px;
+  }
+
+  .comp-details {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
