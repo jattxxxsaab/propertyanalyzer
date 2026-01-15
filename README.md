@@ -137,25 +137,39 @@ The application currently uses **mock data** for demonstration purposes. This me
 
 ### Integrating Real Property APIs
 
-To integrate real property data APIs:
+The application is **pre-configured** with RapidAPI Redfin integration!
 
-1. **Choose an API provider** - See [API_INTEGRATION.md](./API_INTEGRATION.md) for recommendations:
-   - **Attom Data Solutions** (Professional, comprehensive)
-   - **Realty Mole** (Budget-friendly)
-   - **RapidAPI** (Various options, flexible pricing)
+#### Quick Start with RapidAPI
 
-2. **Get API keys** from your chosen provider
+If you have a RapidAPI key:
 
-3. **Configure environment variables**:
-   ```bash
-   cd backend
-   # Edit .env and add your API keys
-   nano .env
-   ```
+1. **Your API key is already configured** in `backend/.env`
+2. **The integration code is ready** in `backend/server.js`
+3. **Just verify your API host** - See [RAPIDAPI_SETUP.md](./RAPIDAPI_SETUP.md) for details
 
-4. **Update the backend code** in `backend/server.js` to call the real APIs instead of returning mock data
+#### Testing Your API
 
-5. **Refer to API_INTEGRATION.md** for detailed integration instructions and code examples
+```bash
+# Start the backend
+cd backend
+npm run dev
+
+# In another terminal, test the API
+curl http://localhost:5001/api/health
+```
+
+See [RAPIDAPI_SETUP.md](./RAPIDAPI_SETUP.md) for:
+- How to verify your RapidAPI endpoint configuration
+- Testing and troubleshooting steps
+- Switching between mock and real data
+- API cost management tips
+
+#### Alternative API Providers
+
+For other property data APIs, see [API_INTEGRATION.md](./API_INTEGRATION.md):
+- **Attom Data Solutions** (Professional, comprehensive)
+- **Realty Mole** (Budget-friendly)
+- **Zillow API** (Well-known brand)
 
 ## API Endpoints
 
