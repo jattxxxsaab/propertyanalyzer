@@ -96,8 +96,8 @@ npm run dev
 ```
 
 This will start:
-- Backend API server on http://localhost:5000
-- Frontend React app on http://localhost:3000
+- Backend API server on http://localhost:5001
+- Frontend React app on http://localhost:3001
 
 #### Option 2: Run Frontend and Backend Separately
 
@@ -117,7 +117,7 @@ npm start
 
 Open your browser and navigate to:
 ```
-http://localhost:3000
+http://localhost:3001
 ```
 
 The application is now running with **mock data**. You can:
@@ -169,7 +169,7 @@ To integrate real property data APIs:
 ### Example Request
 
 ```bash
-curl "http://localhost:5000/api/property?address=123%20Main%20St%2C%20Los%20Angeles%2C%20CA%2090001"
+curl "http://localhost:5001/api/property?address=123%20Main%20St%2C%20Los%20Angeles%2C%20CA%2090001"
 ```
 
 ### Response Format
@@ -286,25 +286,25 @@ Add or remove statistics by modifying:
 
 ### Port Already in Use
 
-If port 3000 or 5000 is already in use:
+If port 3001 or 5001 is already in use:
 
 **Frontend:**
 ```bash
 # Set custom port
-PORT=3001 npm start
+PORT=3002 npm start
 ```
 
 **Backend:**
 ```bash
 # Edit backend/.env
-PORT=5001
+PORT=5002
 ```
 
 ### CORS Errors
 
 If you see CORS errors, ensure:
 1. Backend server is running
-2. `frontend/package.json` has the correct proxy setting: `"proxy": "http://localhost:5000"`
+2. `frontend/package.json` has the correct proxy setting: `"proxy": "http://localhost:5001"`
 
 ### Dependencies Issues
 
