@@ -1,0 +1,92 @@
+.comparable-sales {
+  height: fit-content;
+}
+
+.section-description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.comps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.comp-item {
+  border: 2px solid #e3e8ff;
+  border-radius: 8px;
+  padding: 15px;
+  transition: all 0.3s ease;
+}
+
+.comp-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.comp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.comp-address {
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+  flex: 1;
+}
+
+.comp-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #667eea;
+  white-space: nowrap;
+  margin-left: 10px;
+}
+
+.comp-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.comp-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.comp-detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.comp-detail-value {
+  color: #333;
+  text-align: right;
+}
+
+.comp-price-per-sqft {
+  background: #f8f9fa;
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.no-comps {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-style: italic;
+}
