@@ -7,6 +7,7 @@ This guide will help you configure and test your RapidAPI Redfin integration.
 Your API key has been configured in `/backend/.env`:
 ```
 RAPIDAPI_KEY=47dd0078d1mshd091c749d88ee62p1b59c6jsn9c89001ead32
+RAPIDAPI_HOST=redfin5.rapidapi.com
 USE_REAL_API=true
 ```
 
@@ -16,15 +17,19 @@ RapidAPI has several Redfin-related APIs. You need to verify which one you're su
 
 ### Common RapidAPI Redfin Services:
 
-1. **Redfin API (by API Dojo)**
+1. **Redfin5 API** (Currently Configured)
+   - Host: `redfin5.rapidapi.com`
+   - Endpoints: `/search`, `/property/details`, `/property/comps`
+
+2. **Redfin API (by API Dojo)**
    - Host: `redfin-com-data.p.rapidapi.com`
    - Endpoints: `/search`, `/property/details`, `/property/comps`
 
-2. **US Real Estate API**
+3. **US Real Estate API**
    - Host: `us-real-estate.p.rapidapi.com`
    - Different endpoint structure
 
-3. **Zillow/Redfin Combined APIs**
+4. **Zillow/Redfin Combined APIs**
    - Various hosts and endpoint patterns
 
 ## How to Find Your API Details
@@ -40,7 +45,7 @@ RapidAPI has several Redfin-related APIs. You need to verify which one you're su
 
 ## Update Configuration
 
-If your API host is different from `redfin-com-data.p.rapidapi.com`, update your `.env` file:
+Your API is currently configured to use `redfin5.rapidapi.com`. If you need to change to a different API host, update your `.env` file:
 
 ```bash
 # Edit backend/.env

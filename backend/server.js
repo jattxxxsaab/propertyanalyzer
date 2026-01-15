@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5001;
 // Configuration
 const USE_REAL_API = process.env.USE_REAL_API === 'true';
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || 'redfin-com-data.p.rapidapi.com';
+const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || 'redfin5.rapidapi.com';
 
 // Middleware
 app.use(cors());
