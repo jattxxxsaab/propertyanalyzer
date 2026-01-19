@@ -14,6 +14,9 @@ const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 1800000; // 30 minutes
 // Initialize cache
 const cache = new Cache(CACHE_TTL);
 
+// In-memory storage for repair orders (use database in production)
+let repairOrders = [];
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -150,6 +153,241 @@ app.get('/api/comps', async (req, res) => {
     });
   }
 });
+
+// ============================================
+// REPAIR ORDER ENDPOINTS
+// ============================================
+
+// Get all repair orders
+app.get('/api/repair-orders', (req, res) => {
+  try {
+    // Return all orders sorted by creation date (newest first)
+    const sortedOrders = [...repairOrders].sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    res.json({
+      success: true,
+      count: sortedOrders.length,
+      data: sortedOrders
+    });
+  } catch (error) {
+    console.error('Get repair orders error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve repair orders'
+    });
+  }
+});
+
+// Get a single repair order by ID
+app.get('/api/repair-orders/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = repairOrders.find(o => o.id === id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repair order not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error('Get repair order error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve repair order'
+    });
+  }
+});
+
+// Create a new repair order
+app.post('/api/repair-orders', (req, res) => {
+  try {
+    const orderData = req.body;
+
+    // Validate required fields
+    if (!orderData.assetNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Asset number is required'
+      });
+    }
+    if (!orderData.orderNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order number is required'
+      });
+    }
+    if (!orderData.repairType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Repair type is required'
+      });
+    }
+    if (!orderData.description) {
+      return res.status(400).json({
+        success: false,
+        error: 'Description is required'
+      });
+    }
+    if (!orderData.serviceProvider) {
+      return res.status(400).json({
+        success: false,
+        error: 'Service provider is required'
+      });
+    }
+
+    // Check for duplicate order number
+    const existingOrder = repairOrders.find(o => o.orderNumber === orderData.orderNumber);
+    if (existingOrder) {
+      return res.status(409).json({
+        success: false,
+        error: 'Order number already exists'
+      });
+    }
+
+    // Create new repair order with generated ID
+    const newOrder = {
+      id: `RO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      ...orderData,
+      createdAt: orderData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    repairOrders.push(newOrder);
+
+    console.log(`Created repair order: ${newOrder.orderNumber} (${newOrder.id})`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Repair order created successfully',
+      data: newOrder
+    });
+  } catch (error) {
+    console.error('Create repair order error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create repair order'
+    });
+  }
+});
+
+// Update a repair order
+app.put('/api/repair-orders/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const orderIndex = repairOrders.findIndex(o => o.id === id);
+
+    if (orderIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repair order not found'
+      });
+    }
+
+    // Update the order
+    repairOrders[orderIndex] = {
+      ...repairOrders[orderIndex],
+      ...updates,
+      id, // Preserve the original ID
+      createdAt: repairOrders[orderIndex].createdAt, // Preserve creation date
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log(`Updated repair order: ${id}`);
+
+    res.json({
+      success: true,
+      message: 'Repair order updated successfully',
+      data: repairOrders[orderIndex]
+    });
+  } catch (error) {
+    console.error('Update repair order error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update repair order'
+    });
+  }
+});
+
+// Delete a repair order
+app.delete('/api/repair-orders/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const orderIndex = repairOrders.findIndex(o => o.id === id);
+
+    if (orderIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repair order not found'
+      });
+    }
+
+    const deletedOrder = repairOrders.splice(orderIndex, 1)[0];
+
+    console.log(`Deleted repair order: ${id}`);
+
+    res.json({
+      success: true,
+      message: 'Repair order deleted successfully',
+      data: deletedOrder
+    });
+  } catch (error) {
+    console.error('Delete repair order error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete repair order'
+    });
+  }
+});
+
+// Get repair order statistics
+app.get('/api/repair-orders-stats', (req, res) => {
+  try {
+    const stats = {
+      total: repairOrders.length,
+      byStatus: {},
+      byPriority: {},
+      totalCost: 0
+    };
+
+    repairOrders.forEach(order => {
+      // Count by status
+      stats.byStatus[order.status] = (stats.byStatus[order.status] || 0) + 1;
+
+      // Count by priority
+      stats.byPriority[order.priority] = (stats.byPriority[order.priority] || 0) + 1;
+
+      // Sum total cost
+      if (order.totalCost) {
+        stats.totalCost += parseFloat(order.totalCost);
+      }
+    });
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Get repair order stats error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve statistics'
+    });
+  }
+});
+
+// ============================================
+// END REPAIR ORDER ENDPOINTS
+// ============================================
 
 // 404 handler
 app.use((req, res) => {

@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Home from './pages/Home'
 import Results from './pages/Results'
+import RepairOrder from './pages/RepairOrder'
 import './App.css'
 
 function App() {
@@ -9,10 +10,18 @@ function App() {
       <div className="app">
         <header className="app-header">
           <div className="container">
-            <h1 className="logo">
-              <a href="/">Property Analyzer</a>
-            </h1>
-            <p className="tagline">Professional Real Estate Analysis</p>
+            <div className="header-content">
+              <div className="header-text">
+                <h1 className="logo">
+                  <Link to="/">Property Analyzer</Link>
+                </h1>
+                <p className="tagline">Professional Real Estate Analysis</p>
+              </div>
+              <nav className="header-nav">
+                <Link to="/" className="nav-link">Property Search</Link>
+                <Link to="/repair-orders" className="nav-link">Repair Orders</Link>
+              </nav>
+            </div>
           </div>
         </header>
 
@@ -20,6 +29,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/property" element={<Results />} />
+            <Route path="/repair-orders" element={<RepairOrder />} />
           </Routes>
         </main>
 
